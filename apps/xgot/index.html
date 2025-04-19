@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/xgot/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="google" content="notranslate"/>
+  <title>Tauri + React + Typescript</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    #root {
+      transform-origin: top left;
+      position: absolute;
+      width: BASE_WIDTH;
+      height: BASE_HEIGHT;
+      left: 0;
+      top: 0;
+    }
+  </style>
+  <script type="module" crossorigin src="/xgot/assets/index-D-E9_2HZ.js"></script>
+  <link rel="stylesheet" crossorigin href="/xgot/assets/index-CVGyZnz3.css">
+</head>
+
+<body>
+<div id="root"></div>
+
+<script>
+  // Configuration values
+  const BASE_WIDTH = 840; // Base design width
+  const BASE_HEIGHT = 1050; // Base design height
+
+  function applyScale() {
+    const rootElement = document.getElementById('root');
+
+    // Set the actual size of the root element to match the base dimensions
+    rootElement.style.width = `${BASE_WIDTH}px`;
+    rootElement.style.height = `${BASE_HEIGHT}px`;
+
+    // Get current viewport dimensions
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    // Calculate scale factors for width and height
+    const scaleX = viewportWidth / BASE_WIDTH;
+    const scaleY = viewportHeight / BASE_HEIGHT;
+
+    // Use the smaller scale to ensure the entire app fits within the viewport
+    const scale = Math.min(scaleX, scaleY);
+
+    // Apply the scale transform
+    rootElement.style.transform = `scale(${scale})`;
+
+    // Center the scaled content
+    if (scaleX < scaleY) {
+      // Content is constrained by width, center vertically
+      const scaledHeight = BASE_HEIGHT * scale;
+      const unusedHeight = viewportHeight - scaledHeight;
+      rootElement.style.top = `${unusedHeight / 2}px`;
+      rootElement.style.left = '0px';
+    } else {
+      // Content is constrained by height, center horizontally
+      const scaledWidth = BASE_WIDTH * scale;
+      const unusedWidth = viewportWidth - scaledWidth;
+      rootElement.style.left = `${unusedWidth / 2}px`;
+      rootElement.style.top = '0px';
+    }
+  }
+
+  // Apply scale on page load
+  window.addEventListener('DOMContentLoaded', applyScale);
+
+  // Re-apply scale whenever the window is resized
+  window.addEventListener('resize', applyScale);
+</script>
+
+
+</body>
+</html>
