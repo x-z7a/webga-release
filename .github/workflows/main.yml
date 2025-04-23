@@ -1,0 +1,42 @@
+name: Bundle and Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Extract commit timestamp
+        id: extract
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          TIMESTAMP=$(echo "$COMMIT_MSG" | grep -oP '\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}' || date +%Y-%m-%d_%H-%M-%S)
+          VERSION=$(echo $TIMESTAMP | sed 's/_/-/; s/_/./g; s/-/./1')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Count today's builds for versioning
+        id: count
+        run: |
+          DATE_PREFIX=$(echo $VERSION | cut -d'-' -f1)
+          COUNT=$(gh release list --limit 100 | grep "$DATE_PREFIX" | wc -l)
+          BUILD_NO=$(printf "%03d" $((COUNT + 1)))
+          echo "BUILD_NO=$BUILD_NO" >> $GITHUB_ENV
+
+      - name: Zip source code
+        run: |
+          zip -r WebGA.zip . -x ".git/*" -x ".github/*"
+
+      - name: Create Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          FINAL_TAG="${VERSION}-${BUILD_NO}"
+          gh release create "$FINAL_TAG" WebGA.zip --title "Release $FINAL_TAG" --notes "Auto-generated bundle"
