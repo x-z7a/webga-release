@@ -22,7 +22,8 @@ jobs:
           COMMIT_MSG=$(git log -1 --pretty=%B)
           TIMESTAMP=$(echo "$COMMIT_MSG" | grep -oP '\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}' || date +%Y-%m-%d_%H-%M-%S)
           VERSION=$(echo $TIMESTAMP | cut -d'_' -f1 | sed 's/-/./g')
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          EPOCH=$(date +%s)
+          echo "VERSION=$VERSION-${EPOCH}" >> $GITHUB_ENV
 
       - name: Count today's builds for versioning
         id: count
