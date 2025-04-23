@@ -13,13 +13,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
 
       - name: Extract commit timestamp
         id: extract
         run: |
           COMMIT_MSG=$(git log -1 --pretty=%B)
           TIMESTAMP=$(echo "$COMMIT_MSG" | grep -oP '\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}' || date +%Y-%m-%d_%H-%M-%S)
-          VERSION=$(echo $TIMESTAMP | sed 's/_/-/; s/_/./g; s/-/./1')
+          VERSION=$(echo $TIMESTAMP | cut -d'_' -f1 | sed 's/-/./g')
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Count today's builds for versioning
