@@ -25,14 +25,6 @@ jobs:
           EPOCH=$(date +%s)
           echo "VERSION=$VERSION-${EPOCH}" >> $GITHUB_ENV
 
-      - name: Count today's builds for versioning
-        id: count
-        run: |
-          DATE_PREFIX=$(echo $VERSION | cut -d'-' -f1)
-          COUNT=$(gh release list --limit 100 | grep "$DATE_PREFIX" | wc -l)
-          BUILD_NO=$(printf "%03d" $((COUNT + 1)))
-          echo "BUILD_NO=$BUILD_NO" >> $GITHUB_ENV
-
       - name: Zip source code
         run: |
           zip -r WebGA.zip . -x ".git/*" -x ".github/*"
@@ -41,5 +33,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          FINAL_TAG="${VERSION}-${BUILD_NO}"
+          FINAL_TAG="${VERSION}"
           gh release create "$FINAL_TAG" WebGA.zip --title "Release $FINAL_TAG" --notes "Auto-generated bundle"
