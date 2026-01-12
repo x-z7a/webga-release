@@ -1,0 +1,67 @@
+name: Release
+
+# if the tag contains -test- the build is pushed into the build-test branch
+# so skunkcrafts does not see it
+
+# Controls when the workflow will run
+on:
+    push:
+        branches: [main]
+        tags:
+            - "*"
+    # Allows you to run this workflow manually from the Actions tab
+    workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+    build:
+        # The type of runner that the job will run on
+        runs-on: macos-latest
+        env:
+            GH_TOKEN: ${{ github.token }}
+
+        # Steps represent a sequence of tasks that will be executed as part of the job
+        steps:
+            # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+            - uses: actions/checkout@v3
+              with:
+                  fetch-depth: 0
+
+            - name: download latest releases
+              shell: bash
+              run: |
+                  # download latest release from this repo
+                  # get the latest release tag
+                  # use GH CLI to get the latest release
+                  LATEST_RELEASE_TAG=$(gh release list --limit 1 --repo ${{ github.repository }} --json tagName --template '{{(index . 0).tagName}}')
+                  echo "Latest release tag: $LATEST_RELEASE_TAG"
+                  # download the release assets
+                  gh release download $LATEST_RELEASE_TAG --repo ${{ github.repository }} --pattern "*.zip" --dir ./latest_release
+                  # unzip the release
+                  unzip ./latest_release/WebGA.zip -d ./latest_release
+
+                  echo "===== Update Skunkcrafts cfg ======"
+                  cp ${{ github.workspace }}/skunkcrafts_updater.cfg ./latest_release/WebGA/skunkcrafts_updater.cfg
+                  sed -i '' "s/REPLACE_ME/${LATEST_RELEASE_TAG}/g" ./latest_release/WebGA/skunkcrafts_updater.cfg
+                  echo "===== Prepare release package ======"
+                  cp -r ./latest_release/WebGA/ release/
+                  rm -f release/skunkcrafts_updater_whitelist.txt
+
+                  find release -type f ! \( -name '*skunkcrafts_updater*' -o -path '*skunkcrafts_updater*' \) -print0 | while IFS= read -r -d '' file; do
+                      checksum_hex=$(crc32 "$file")
+                      
+                      # Convert hex checksum to uint32 decimal
+                      checksum_decimal=$((16#$checksum_hex))
+                      
+                      # Remove "release/" prefix from $file
+                      modified_file="${file#release/}"
+                      echo "$modified_file|$checksum_decimal" >> release/skunkcrafts_updater_whitelist.txt
+                  done
+
+                  TAG=${LATEST_RELEASE_TAG}
+                  TARGET_BRANCH="release"
+
+                  git checkout -b ${TARGET_BRANCH}
+                  git add .
+                  git commit -m "new ${TARGET_BRANCH} - ${TAG}"
+                  git push -f -u origin ${TARGET_BRANCH}
